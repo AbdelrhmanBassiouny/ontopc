@@ -1,5 +1,4 @@
 import owlready2 as owlr
-import json
 import argparse
 
 
@@ -55,7 +54,6 @@ for c in class_dicts:
                 sorted_classes.append(s)
 sorted_classes.extend(non_rooted_classes)
 
-print(json.dumps(sorted_classes, indent=4, sort_keys=False))
 
 import os
 import textwrap
