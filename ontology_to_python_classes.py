@@ -3,11 +3,13 @@ import argparse
 
 
 parser = argparse.ArgumentParser(description='Convert an OWL ontology to a python class file.')
-parser.add_argument('--input', '-i', type=str, help='Input OWL file')
-parser.add_argument('--output', '-o', type=str, help='Output python file')
+parser.add_argument('--input', '-i', type=str, required=True, help='Input OWL file')
+parser.add_argument('--output', '-o', type=str, required=True, help='Output python file')
+parser.add_argument('--add_parent', '-ap', type=str, default=None, help='Add a parent class to all classes in the ontology.')
 args = parser.parse_args()
 infile = args.input
 outfile = args.output
+add_parent = args.add_parent
 
 onto = owlr.get_ontology(infile)
 onto.load()
@@ -18,9 +20,13 @@ class_dicts= []
 subclasses = {}
 class_dict_by_name = {}
 class_dict_by_name['owl.Thing'] = {'superclasses': [], "comment": []}
+if add_parent is not None:
+    class_dict_by_name[add_parent] = {'superclasses': [], "comment": []}
 for c in class_list:
     superclasses = c.is_a
     superclasses = [str(s) for s in superclasses]
+    if add_parent is not None and len(superclasses) == 0:
+        superclasses.append(add_parent)
     comment = c.comment
     print("Class: ", c)
     print("Superclasses: ", superclasses)
@@ -34,6 +40,8 @@ for c in class_list:
 
 # sort classes
 sorted_classes = ['owl.Thing']
+if add_parent is not None:
+    sorted_classes.append(add_parent)
 non_rooted_classes = []
 for c in class_dicts:
     ssc = None
@@ -64,13 +72,13 @@ def MakeFile(file_name, class_dict):
         for c in class_dict:
             cd = class_dict_by_name[c] 
             if len(cd['superclasses']) == 0:
-                sc = ''
+                sc = '' if add_parent is None else add_parent
             else:
                 sc = cd['superclasses'][0].split('.')[-1].replace('CRAM', '')
             if sc == 'Thing':
-                sc = ''
+                sc = '' if add_parent is None else add_parent
             cname = c.split('.')[-1].replace('CRAM', '')
-            if cname == 'FailureDiagnosis' and sc == 'FailureDiagnosis':
+            if cname == sc:
                 continue
             if len(cd['comment']) == 0:
                 cd['comment'] = ''
